@@ -18,9 +18,6 @@ mongoose
     })
     .catch(err => console.log(err));
 
-jwtParams.setNewSessionRoute({path: urlHead + "/users", method: "POST"});
-jwtParams.setNewSessionRoute({path: urlHead + "/login", method: "POST"});
-
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 

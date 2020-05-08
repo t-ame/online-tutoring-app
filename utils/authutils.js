@@ -3,18 +3,11 @@ const { isUserAdmin, isUserTutor, isUserStudent } = require("./apputils");
 
 const newSessionRoutes = [{ path: '/login', method: 'POST' }, { path: '/signup', method: 'POST' }];
 const authRoutes = [{ path: '/user/category', method: 'POST' }];
-const adminRoutes = [];
-const tutorRoutes = [];
 
 const SECRET_KEY = "JWT_SECRET";
 
 exports.jwtParams = {
     getSecretKey: () => SECRET_KEY,
-    getAdminRoutes: () => adminRoutes,
-    getTutorRoutes: () => tutorRoutes,
-    setNewSessionRoute: route => route.path && route.method ? newSessionRoutes.push(route) : null,
-    setAdminRoute: route => route.path && route.method ? adminRoutes.push(route) : null,
-    setTutorRoute: route => route.path && route.method ? tutorRoutes.push(route) : null
 };
 
 exports.handleNewSessionRequests = async (req, res, next) => {
@@ -24,8 +17,8 @@ exports.handleNewSessionRequests = async (req, res, next) => {
     next();
 }
 
-exports.handleAdminRequests = async (req, res, next) => {
-    console.log("Handling Admin Requests");
+exports.authenticateUser = async (req, res, next) => {
+    console.log("Authenticating User");
 
     req.session = {};
 
@@ -37,14 +30,9 @@ exports.handleAdminRequests = async (req, res, next) => {
 
     let userData = this.verifyToken(sessionID);
     if (userData) {
-        if (res.currentUserId || this.isUserAuthorized(true, false, userData)) {
-            req.session.userData = userData;
-            req.session.sessionID = sessionID;
-        } else {
-            return res.status(401).send({ status: false, message: "Unauthorized Access" });
-        }
-    }
-    else {
+        req.session.userData = userData;
+        req.session.sessionID = sessionID;
+    } else {
         return res.status(401).send({ status: false, message: "Invalid access token" });
     }
 
@@ -52,30 +40,32 @@ exports.handleAdminRequests = async (req, res, next) => {
     next();
 }
 
-exports.handleTutorRequests = async (req, res, next) => {
-    console.log("Handling Tutor Requests");
+exports.handleAdminRequests = async (req, res, next) => {
+    console.log("Handling Admin Requests");
 
-    req.session = {};
-
-    let authHeader = req.header('Authorization');
-    let sessionID = authHeader ? authHeader.split(' ')[1] : undefined;
-
-    if (!sessionID)
-        return res.status(401).send({ status: false, message: "Missing access token" });
-
-    let userData = this.verifyToken(sessionID);
+    let userData = req.session.userData;
     if (userData) {
-        if (res.currentUserId || this.isUserAuthorized(false, true, userData)) {
-            req.session.userData = userData;
-            req.session.sessionID = sessionID;
-        } else {
+        if (!(res.currentUserId || this.isUserAuthorized(true, false, userData))) {
             return res.status(401).send({ status: false, message: "Unauthorized Access" });
         }
-    }
-    else {
+    } else {
         return res.status(401).send({ status: false, message: "Invalid access token" });
     }
 
+    next();
+}
+
+exports.handleTutorRequests = async (req, res, next) => {
+    console.log("Handling Tutor Requests");
+
+    let userData = req.session.userData;
+    if (userData) {
+        if (!(res.currentUserId || this.isUserAuthorized(false, true, userData))) {
+            return res.status(401).send({ status: false, message: "Unauthorized Access" });
+        }
+    } else {
+        return res.status(401).send({ status: false, message: "Invalid access token" });
+    }
 
     next();
 }
@@ -111,19 +101,14 @@ exports.handleAllResponses = (req, res, next) => {
 }
 
 exports.currentUserOnly = (req, res, next) => {
-    let authHeader = req.header('Authorization');
-    let sessionID = authHeader ? authHeader.split(' ')[1] : undefined;
-
-    if (!sessionID)
-        return res.status(401).send({ status: false, message: "Missing access token" });
-
-    let userData = this.verifyToken(sessionID);
+    let userData = req.session.userData;
     if (userData) {
         res.currentUserId = userData._id;
         res.currentUserEmail = userData.email;
     } else {
         return res.status(401).send({ status: false, message: "Invalid access token" });
     }
+
     next();
 }
 
