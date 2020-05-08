@@ -1,13 +1,7 @@
 const router = require("express").Router();
-const { signUp, logIn } = require("../controllers/auth");
+const { logIn } = require("../controllers/auth");
+const { handleNewSessionRequests } = require("../utils/authutils");
 
-
-router.get("/", (req, res) => {
-    res.send("This is the express app. You have now entered express");
-});
-
-router.post('/signup', signUp);
-router.post("/login", logIn);
-
+router.post("/login", handleNewSessionRequests, logIn);
 
 module.exports = router;

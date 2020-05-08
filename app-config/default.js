@@ -1,0 +1,4 @@
+
+{
+    myprivatekey: "JWT_SECRET"
+}
