@@ -13,7 +13,8 @@ const categorySchema = new Schema(
         categoryName: {
             type: String,
             enum: catEnum,
-            required: true
+            required: true,
+            trim: true
         },
         subjects: [
             {

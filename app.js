@@ -2,8 +2,9 @@ const express = require("express");
 const mongoose = require("mongoose");
 const authRoutes = require("./routes/auth");
 const userRoutes = require("./routes/user");
+const categoryRoutes = require("./routes/category");
 const { appParams } = require("./utils/apputils");
-const { handleAllRequests, handleAllResponses, jwtParams } = require('./utils/authutils');
+const { handleAllResponses } = require('./utils/authutils');
 
 const app = express();
 
@@ -21,11 +22,9 @@ mongoose
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 
-
-// app.use(handleAllRequests);
-
-app.use(urlHead + "/users", userRoutes);
 app.use(urlHead + "/", authRoutes);
+app.use(urlHead + "/users", userRoutes);
+app.use(urlHead + "/categories", categoryRoutes);
 
 app.use(handleAllResponses);
 

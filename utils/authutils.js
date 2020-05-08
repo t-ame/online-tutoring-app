@@ -70,36 +70,6 @@ exports.handleTutorRequests = async (req, res, next) => {
     next();
 }
 
-exports.handleAllResponses = (req, res, next) => {
-    console.log("Handling Responses");
-
-    if (!res.data) {
-        return res.status(404).send({
-            status: false,
-            message: "Invalid Endpoint"
-        });
-    }
-    if (req.newSessionRequired && req.session.userData) {
-        try {
-            let token = this.generateJWTToken(req.session.userData);
-            res.setHeader('session-token', token);
-            res.data['session-token'] = token;
-        } catch (e) {
-            console.log('Error:', e);
-        }
-    }
-    if (req.session && req.session.sessionID) {
-        try {
-            res.setHeader('session-token', req.session.sessionID);
-            res.data['session-token'] = req.session.sessionID;
-        } catch (e) {
-            console.log('Error:', e);
-        }
-    }
-    res.status(res.statusCode || 200)
-        .send({ status: true, response: res.data });
-}
-
 exports.currentUserOnly = (req, res, next) => {
     let userData = req.session.userData;
     if (userData) {
@@ -110,6 +80,35 @@ exports.currentUserOnly = (req, res, next) => {
     }
 
     next();
+}
+
+exports.handleAllResponses = (req, res, next) => {
+    console.log("Handling Responses");
+    let token = undefined;
+    if (!res.data) {
+        return res.status(404).send({
+            status: false,
+            message: "Invalid Endpoint"
+        });
+    }
+    if (req.newSessionRequired && req.session.userData) {
+        try {
+            token = this.generateJWTToken(req.session.userData);
+            res.setHeader('session-token', token);
+        } catch (e) {
+            console.log('Error:', e);
+        }
+    }
+    if (req.session && req.session.sessionID) {
+        try {
+            token = req.session.sessionID;
+            res.setHeader('session-token', req.session.sessionID);
+        } catch (e) {
+            console.log('Error:', e);
+        }
+    }
+    res.status(res.statusCode || 200)
+        .send({ status: true, response: res.data, token: token });
 }
 
 exports.isUserAuthorized = (adminRequired, tutorRequired, userData) => {
